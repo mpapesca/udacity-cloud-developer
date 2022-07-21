@@ -18,23 +18,45 @@ router.get('/', async (req: Request, res: Response) => {
 
 //@TODO
 //Add an endpoint to GET a specific resource by Primary Key
+router.get('/:id', requireAuth, async (req: Request, res: Response) => {
+    const { id: idParam } = req.params;
+    if (!idParam) {
+        return res.status(400).send('id required');
+    }
+    const id = parseInt(idParam);
+    const item = await FeedItem.findByPk(id);
+    if (item) {
+        return res.status(200).send(item);
+    }
+    return res.status(404).send('item not found');
+});
 
 // update a specific resource
-router.patch('/:id', 
-    requireAuth, 
-    async (req: Request, res: Response) => {
-        //@TODO try it yourself
-        res.status(500).send("not implemented")
+router.patch('/:id', requireAuth, async (req: Request, res: Response) => {
+    const { id: idParam } = req.params;
+    const { caption, url } = req.body;
+    if (!idParam) {
+        return res.status(400).send('id required');
+    }
+    const id = parseInt(idParam);
+    const item = await FeedItem.findByPk(id);
+    if (!item) {
+        return res.status(404).send('item not found');
+    }
+
+    item.caption = caption;
+    item.url = url;
+    await item.save();
+    return res.status(200).send(item);
 });
 
 
 // Get a signed url to put a new item in the bucket
-router.get('/signed-url/:fileName', 
-    requireAuth, 
-    async (req: Request, res: Response) => {
+router.get('/signed-url/:fileName', requireAuth, async (req: Request, res: Response) => {
     let { fileName } = req.params;
+    console.log({ fileName });
     const url = AWS.getPutSignedUrl(fileName);
-    res.status(201).send({url: url});
+    res.status(201).send({ url: url });
 });
 
 // Post meta data and the filename after a file is uploaded 
