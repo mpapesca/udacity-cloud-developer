@@ -1,6 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import { filterImageFromURL, deleteLocalFiles, isValidUrl } from './util/util';
+import { filterImageFromURL, deleteLocalFiles } from './util/util';
 import { STATUS_CODES } from 'http';
 import { nextTick } from 'process';
 
@@ -33,19 +33,24 @@ import { nextTick } from 'process';
   //! END @TODO1
 
   app.get('/filteredimage', async (req, res) => {
-    const { image_url } = req.query;
-    if (!image_url) {
-      return res.status(400).send('Must include image_url');
-    }
-
-    const filteredImage = await filterImageFromURL(image_url);
-    res.download(filteredImage, (err) => {
-      if (err) {
-        console.error(err);
-      } else {
-        deleteLocalFiles([filteredImage]);
+    try {
+      const { image_url } = req.query;
+      if (!image_url) {
+        return res.status(400).send('Must include image_url');
       }
-    });
+
+      const filteredImage = await filterImageFromURL(image_url);
+      res.download(filteredImage, (err) => {
+        if (err) {
+          console.error(err);
+        } else {
+          deleteLocalFiles([filteredImage]);
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send(error);
+    }
   });
 
   // Root Endpoint
